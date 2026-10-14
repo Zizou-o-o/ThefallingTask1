@@ -1,15 +1,17 @@
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerJump))]
+[RequireComponent(typeof(PlayerJump), typeof(PlayerAnimation))]
 public class PlayerShooter : MonoBehaviour
 {
     [SerializeField] private float shootRange = 3f;
 
     private PlayerJump jump;
+    private PlayerAnimation playerAnimation;
 
     private void Awake()
     {
         jump = GetComponent<PlayerJump>();
+        playerAnimation = GetComponent<PlayerAnimation>();
     }
 
     private void Update()
@@ -25,7 +27,7 @@ public class PlayerShooter : MonoBehaviour
         Ball target = FindNearestBallInRange();
 
         if (target != null)
-            target.Kick();
+            target.Kick(playerAnimation.FacingDirection);
     }
 
     private Ball FindNearestBallInRange()

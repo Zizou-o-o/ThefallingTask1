@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(PlayerJump))]
+[RequireComponent(typeof(Rigidbody2D), typeof(PlayerJump), typeof(PlayerAnimation))]
 public class PlayerDash : MonoBehaviour
 {
     [SerializeField] private float dashSpeed = 18f;
@@ -9,8 +9,8 @@ public class PlayerDash : MonoBehaviour
 
     private Rigidbody2D rb;
     private PlayerJump jump;
+    private PlayerAnimation playerAnimation;
     private bool dashPressed;
-    private float facing = 1f;
     private float dashDirection;
     private float dashTimeLeft;
     private float cooldownLeft;
@@ -21,14 +21,11 @@ public class PlayerDash : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         jump = GetComponent<PlayerJump>();
+        playerAnimation = GetComponent<PlayerAnimation>();
     }
 
     private void Update()
     {
-        float input = Input.GetAxisRaw("Horizontal");
-        if (input != 0f)
-            facing = Mathf.Sign(input);
-
         if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
             dashPressed = true;
     }
@@ -49,7 +46,7 @@ public class PlayerDash : MonoBehaviour
     private void StartDash()
     {
         IsDashing = true;
-        dashDirection = facing;
+        dashDirection = playerAnimation.FacingDirection;
         dashTimeLeft = dashDuration;
     }
 

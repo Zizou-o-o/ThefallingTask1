@@ -27,6 +27,12 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private float spawnInterval = 1f;
     [SerializeField] private float timeBetweenRounds = 3f;
 
+    [Header("Target")]
+    [SerializeField] private Target targetPrefab;
+    [SerializeField] private int targetEveryRounds = 5;
+    [SerializeField] private float targetLeftX = -8f;
+    [SerializeField] private float targetRightX = 8f;
+
     private int currentRound;
 
     private void Start()
@@ -41,10 +47,30 @@ public class WaveManager : MonoBehaviour
             currentRound++;
             WaveStarted?.Invoke(currentRound);
 
+            Target target = TrySpawnTarget(currentRound);
+
             yield return SpawnRound(currentRound);
-            yield return new WaitUntil(() => Ball.Active.Count == 0);
+            yield return new WaitUntil(RoundIsOver);
+
+            if (target != null)
+                Destroy(target.gameObject);
+
             yield return new WaitForSeconds(timeBetweenRounds);
         }
+    }
+
+    private bool RoundIsOver()
+    {
+        return Ball.Active.Count == 0 && Ball.Kicked.Count == 0;
+    }
+
+    private Target TrySpawnTarget(int round)
+    {
+        if (targetPrefab == null || round % targetEveryRounds != 0)
+            return null;
+
+        float x = Random.value < 0.5f ? targetLeftX : targetRightX;
+        return Instantiate(targetPrefab, new Vector3(x, 0f, 0f), Quaternion.identity);
     }
 
     private IEnumerator SpawnRound(int round)

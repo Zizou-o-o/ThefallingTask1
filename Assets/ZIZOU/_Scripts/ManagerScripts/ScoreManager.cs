@@ -7,6 +7,7 @@ public class ScoreManager : MonoBehaviour
 
     [SerializeField] private int normalPoints = 10;
     [SerializeField] private int slowPoints = 25;
+    [SerializeField] private int targetPoints = 10;
 
     private int score;
 
@@ -20,12 +21,31 @@ public class ScoreManager : MonoBehaviour
         ScoreChanged?.Invoke(score);
     }
 
-    private void OnEnable() { Ball.Collected += OnBallCollected; }
-    private void OnDisable() { Ball.Collected -= OnBallCollected; }
+    private void OnEnable()
+    {
+        Ball.Collected += OnBallCollected;
+        Target.Hit += OnTargetHit;
+    }
+
+    private void OnDisable()
+    {
+        Ball.Collected -= OnBallCollected;
+        Target.Hit -= OnTargetHit;
+    }
 
     private void OnBallCollected(Ball ball)
     {
-        score += PointsFor(ball.Type);
+        AddPoints(PointsFor(ball.Type));
+    }
+
+    private void OnTargetHit(Target target)
+    {
+        AddPoints(targetPoints);
+    }
+
+    private void AddPoints(int points)
+    {
+        score += points;
         ScoreChanged?.Invoke(score);
     }
 

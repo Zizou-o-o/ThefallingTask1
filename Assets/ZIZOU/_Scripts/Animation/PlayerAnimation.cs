@@ -11,7 +11,8 @@ public class PlayerAnimation : MonoBehaviour
 
     private Rigidbody2D rb;
     private PlayerJump jump;
-    private bool facingLeft;
+
+    public float FacingDirection { get; private set; } = 1f;
 
     private void Awake()
     {
@@ -29,16 +30,14 @@ public class PlayerAnimation : MonoBehaviour
 
     private void LateUpdate()
     {
-        spriteRenderer.flipX = facingLeft;
+        spriteRenderer.flipX = FacingDirection < 0f;
     }
 
     private void UpdateFacing()
     {
         float input = Input.GetAxisRaw("Horizontal");
 
-        if (input < 0f)
-            facingLeft = true;
-        else if (input > 0f)
-            facingLeft = false;
+        if (input != 0f)
+            FacingDirection = Mathf.Sign(input);
     }
 }

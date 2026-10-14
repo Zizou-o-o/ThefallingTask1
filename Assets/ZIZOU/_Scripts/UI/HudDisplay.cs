@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class HudDisplay : MonoBehaviour
 {
+    [SerializeField] private TMP_Text FinalscoreText;
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text waveText;
 
@@ -19,8 +20,9 @@ public class HudDisplay : MonoBehaviour
     }
 
     private void UpdateScore(int score)
-    {
+    {  
         scoreText.text = " " + score;
+        FinalscoreText.text = " " + score;
     }
 
     private void UpdateWave(int wave)
