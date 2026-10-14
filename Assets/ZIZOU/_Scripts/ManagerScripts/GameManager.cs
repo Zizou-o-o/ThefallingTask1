@@ -26,39 +26,42 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         Ball.ReachedBottom += OnBallReachedBottom;
-        Ball.Collected += OnBallCollected;
+        Ball.Exploded += OnBallExploded;
     }
 
     private void OnDisable()
     {
         Ball.ReachedBottom -= OnBallReachedBottom;
-        Ball.Collected -= OnBallCollected;
+        Ball.Exploded -= OnBallExploded;
     }
 
     private void OnBallReachedBottom(Ball ball)
     {
-        if (!IsPlaying || ball.Type == BallType.Bomb) return;
+        if (ball.Type == BallType.Bomb) return;
+        LoseLife();
+    }
+
+    private void OnBallExploded(Ball ball)
+    {
+        LoseLife();
+    }
+
+    private void LoseLife()
+    {
+        if (!IsPlaying) return;
 
         lives--;
         LivesChanged?.Invoke(lives);
 
         if (lives <= 0)
-            EndGame("No lives left");
+            EndGame();
     }
 
-    private void OnBallCollected(Ball ball)
+    private void EndGame()
     {
-        if (ball.Type == BallType.Bomb)
-            EndGame("You got a bomb");
-    }
-
-    private void EndGame(string reason)
-    {
-        if (!IsPlaying) return;
-
         IsPlaying = false;
         Time.timeScale = 0f;
-        Debug.Log("Game over: " + reason);
+        Debug.Log("Game over: no lives left");
         GameOver?.Invoke();
     }
 }
