@@ -1,80 +1,101 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class WaveManager : MonoBehaviour
 {
     public static event Action<int> WaveStarted;
 
     [SerializeField] private BallSpawner spawner;
-    [SerializeField] private int firstWaveTarget = 5;
-    [SerializeField] private int targetIncreasePerWave = 3;
-    [SerializeField] private float startSpawnInterval = 1.5f;
-    [SerializeField] private float intervalDecreasePerWave = 0.1f;
-    [SerializeField] private float minSpawnInterval = 0.5f;
-    [SerializeField] private float timeBetweenWaves = 3f;
 
-    private int currentWave;
-    private int collected;
-    private int target;
-    private bool waveActive;
-    private Coroutine spawnRoutine;
+    [Header("Counts")]
+    [SerializeField] private int firstRoundNormals = 5;
+    [SerializeField] private int normalsAddedPerRound = 2;
+    [SerializeField] private int bombEveryRounds = 2;
+    [SerializeField] private int slowEveryRounds = 3;
 
-    private void OnEnable() { Ball.Collected += OnBallCollected; }
-    private void OnDisable() { Ball.Collected -= OnBallCollected; }
+    [Header("Speeds")]
+    [SerializeField] private float normalBaseSpeed = 3f;
+    [SerializeField] private float normalSpeedIncrease = 0.1f;
+    [SerializeField] private float slowSpeed = 1.5f;
+    [SerializeField] private float bombMinSpeed = 2f;
+    [SerializeField] private float bombMaxSpeed = 6f;
+
+    [Header("Timing")]
+    [SerializeField] private float spawnInterval = 1f;
+    [SerializeField] private float timeBetweenRounds = 3f;
+
+    private int currentRound;
 
     private void Start()
     {
-        BeginWave();
+        StartCoroutine(GameLoop());
     }
 
-    private void BeginWave()
-    {
-        currentWave++;
-        collected = 0;
-        target = firstWaveTarget + targetIncreasePerWave * (currentWave - 1);
-        waveActive = true;
-
-        float interval = Mathf.Max(minSpawnInterval,
-            startSpawnInterval - intervalDecreasePerWave * (currentWave - 1));
-
-        WaveStarted?.Invoke(currentWave);
-        spawnRoutine = StartCoroutine(SpawnLoop(interval));
-    }
-
-    private IEnumerator SpawnLoop(float interval)
+    private IEnumerator GameLoop()
     {
         while (true)
         {
-            spawner.Spawn();
-            yield return new WaitForSeconds(interval);
+            currentRound++;
+            WaveStarted?.Invoke(currentRound);
+
+            yield return SpawnRound(currentRound);
+            yield return new WaitUntil(() => Ball.Active.Count == 0);
+            yield return new WaitForSeconds(timeBetweenRounds);
         }
     }
 
-    private void OnBallCollected(Ball ball)
+    private IEnumerator SpawnRound(int round)
     {
-        if (!waveActive || ball.Type == BallType.Bomb) return;
+        List<BallType> queue = BuildQueue(round);
 
-        collected++;
-
-        if (collected >= target)
+        foreach (BallType type in queue)
         {
-            waveActive = false;
-            StartCoroutine(EndWave());
+            spawner.Spawn(type, SpeedFor(type, round));
+            yield return new WaitForSeconds(spawnInterval);
         }
     }
 
-    private IEnumerator EndWave()
+    private List<BallType> BuildQueue(int round)
     {
-        StopCoroutine(spawnRoutine);
-        ClearBalls();
-        yield return new WaitForSeconds(timeBetweenWaves);
-        BeginWave();
+        List<BallType> queue = new List<BallType>();
+
+        AddBalls(queue, BallType.Normal, NormalCount(round));
+        AddBalls(queue, BallType.Bomb, BombCount(round));
+        AddBalls(queue, BallType.Slow, SlowCount(round));
+
+        Shuffle(queue);
+        return queue;
     }
 
-    private void ClearBalls()
+    private int NormalCount(int round) => firstRoundNormals + normalsAddedPerRound * (round - 1);
+    private int BombCount(int round) => round / bombEveryRounds;
+    private int SlowCount(int round) => round / slowEveryRounds;
+
+    private float SpeedFor(BallType type, int round)
     {
-        foreach (Ball ball in FindObjectsByType<Ball>(FindObjectsSortMode.None))
-            Destroy(ball.gameObject);
+        switch (type)
+        {
+            case BallType.Normal: return normalBaseSpeed + normalSpeedIncrease * (round - 1);
+            case BallType.Slow: return slowSpeed;
+            default: return Random.Range(bombMinSpeed, bombMaxSpeed);
+        }
+    }
+
+    private void AddBalls(List<BallType> queue, BallType type, int count)
+    {
+        for (int i = 0; i < count; i++)
+            queue.Add(type);
+    }
+
+    private void Shuffle(List<BallType> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }

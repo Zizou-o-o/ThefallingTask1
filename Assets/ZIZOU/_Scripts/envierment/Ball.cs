@@ -34,6 +34,11 @@ public class Ball : MonoBehaviour
         }
     }
 
+    public void SetFallSpeed(float speed)
+    {
+        fallSpeed = speed;
+    }
+
     public void Kick()
     {
         if (type == BallType.Bomb)
